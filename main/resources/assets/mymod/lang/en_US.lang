@@ -1,0 +1,7 @@
+item.genericItem.name=Generic Item
+item.customHelmet.name=Generic Helmet
+item.customChestplate.name=Generic Chestplate
+item.customLeggings.name=Generic Leggings
+item.customBoots.name=Generic Boots
+tile.customBlock.name=Generic Block
+item.customThrowableItem.name=Generic Throwable
