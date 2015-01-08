@@ -108,17 +108,19 @@ public class ForgeEvents {
 	@SubscribeEvent
 	public void onLivingDeath(LivingDeathEvent e) {
 		if (!e.entityLiving.worldObj.isRemote) {
+			String player;
 			if (e.entityLiving instanceof EntityPlayer) {
-				String player = ((EntityPlayer)e.entityLiving).getCommandSenderName();
-				String type;
-				if (e.source.getEntity() != null) {
-					type = e.source.getEntity().getClass().getSimpleName();
-				}
-				else type = e.source.getDamageType();
-				String loc = (int)Math.floor(e.entityLiving.posX)+" "+(int)Math.floor(e.entityLiving.posY)+" "+(int)Math.floor(e.entityLiving.posZ);
-				String result = player+" "+loc+" "+type;
-				MFYLog.log(MFYLog.tagPlayerDeath, result);
+				player = ((EntityPlayer)e.entityLiving).getCommandSenderName();
 			}
+			else player = e.entityLiving.getClass().getSimpleName();
+			String type;
+			if (e.source.getEntity() != null) {
+				type = e.source.getEntity().getClass().getSimpleName();
+			}
+			else type = e.source.getDamageType();
+			String loc = (int)Math.floor(e.entityLiving.posX)+" "+(int)Math.floor(e.entityLiving.posY)+" "+(int)Math.floor(e.entityLiving.posZ);
+			String result = player+" "+loc+" "+type;
+			MFYLog.log(MFYLog.tagEntityDeath, result);
 		}
 	}
 	

@@ -1,8 +1,8 @@
 [
 {
-  "modid": "examplemod",
-  "name": "Example Mod",
-  "description": "Example placeholder mod.",
+  "modid": "MFYLog",
+  "name": "MFY Log",
+  "description": "The MakersFactory Logging Mod, for use with the MFY Analytics program.",
   "version": "${version}",
   "mcversion": "${mcversion}",
   "url": "",

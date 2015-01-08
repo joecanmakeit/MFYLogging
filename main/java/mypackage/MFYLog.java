@@ -33,7 +33,7 @@ import cpw.mods.fml.common.network.NetworkRegistry;
 import cpw.mods.fml.common.registry.EntityRegistry;
 import cpw.mods.fml.common.registry.GameRegistry;
 
-@Mod(modid="MFYLog-ID", name="MFY Log", version="0.0.1", acceptableRemoteVersions="*")
+@Mod(modid="MFYLog", name="MFY Log", version="1.0.0", acceptableRemoteVersions="*")
 public class MFYLog {
 
 	@Instance(value = "1")
@@ -53,7 +53,7 @@ public class MFYLog {
 	public static final String tagCommand = "CMD";
 	public static final String tagBreak = "BRK";
 	public static final String tagDamage = "DMG";
-	public static final String tagPlayerDeath = "DTH";
+	public static final String tagEntityDeath = "DTH";
 	public static final String tagConnect = "CON";
 
 	@EventHandler
