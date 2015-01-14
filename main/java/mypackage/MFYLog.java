@@ -1,11 +1,23 @@
 package mypackage;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.net.URL;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+import java.util.zip.GZIPOutputStream;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -29,11 +41,12 @@ import cpw.mods.fml.common.SidedProxy;
 import cpw.mods.fml.common.event.FMLInitializationEvent;
 import cpw.mods.fml.common.event.FMLPostInitializationEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
+import cpw.mods.fml.common.event.FMLServerStoppingEvent;
 import cpw.mods.fml.common.network.NetworkRegistry;
 import cpw.mods.fml.common.registry.EntityRegistry;
 import cpw.mods.fml.common.registry.GameRegistry;
 
-@Mod(modid="MFYLog", name="MFY Log", version="1.0.0", acceptableRemoteVersions="*")
+@Mod(modid="MFYLog", name="MFY Log", version="0.1.1", acceptableRemoteVersions="*")
 public class MFYLog {
 
 	@Instance(value = "1")
@@ -41,6 +54,7 @@ public class MFYLog {
 	//@SidedProxy(clientSide="mypackage.client.CommonProxy", serverSide="mypackage.CommonProxy")
 	//public static CommonProxy proxy;
 	
+	static String logFileName;
 	static OutputStreamWriter logWriter;
 	Date date;
 	
@@ -89,13 +103,16 @@ public class MFYLog {
 		String day = String.format("%02d", cal.get(Calendar.DAY_OF_MONTH));
 		String hour = String.format("%02d", cal.get(Calendar.HOUR_OF_DAY));
 		String minute = String.format("%02d", cal.get(Calendar.MINUTE));
-		String logFileName = "MFY_"+year+"-"+month+"-"+day+"_"+hour+minute+".txt";
+		logFileName = "MFY_"+year+"-"+month+"-"+day+"_"+hour+minute+".txt";
+		boolean success = new File("MFY_logs").mkdir();
+		
 		try {
-			logWriter = new OutputStreamWriter(new FileOutputStream(logFileName), Charset.forName("UTF-8").newEncoder()) ;
+			logWriter = new OutputStreamWriter(new FileOutputStream("MFY_logs\\"+logFileName), Charset.forName("UTF-8").newEncoder()) ;
 		} catch (Exception e) {	
 			int a = 0;
 		}
 		log(tagInfo, "Log file loaded.");
+		compressExistingLogs();
 	}
 	
 	public static void writeLineToLog(String message) {
@@ -142,5 +159,47 @@ public class MFYLog {
 	public static void log(String tag, String message) {
 		String result = getFormattedDate()+" "+getFormattedTime()+" "+tag.toUpperCase();
 		writeLineToLog(result+" "+message);
+	}
+	
+	static final int BUFFER = 2048;
+	
+	public static void compressExistingLogs() {
+		boolean success = new File("MFY_logs").mkdir();
+		File dir = new File("MFY_logs");
+		ArrayList<String> toDelete = new ArrayList<String>();
+		for (String logName : dir.list()) {
+			if (isLogFile(logName) && !logName.startsWith(logFileName)) {
+				try {
+					String logNameMod = "MFY_logs\\"+logName;
+					String zipName = logNameMod.replace("txt", "zip");
+					if (!new File(zipName).exists()) {
+						ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(zipName)));
+						BufferedInputStream orig = new BufferedInputStream(new FileInputStream(new File(logNameMod)), 2048);
+						out.putNextEntry(new ZipEntry(logName));
+						byte data[] = new byte[BUFFER];
+						int count;
+						while ((count = orig.read(data, 0, BUFFER)) != -1) out.write(data,0,count);
+						orig.close();
+						out.close();
+					}
+					toDelete.add(logNameMod);
+				} catch (Exception e1) {
+					e1.printStackTrace();
+				}
+			}
+		}
+		for (String s : toDelete) {
+			try {
+				Files.delete(new File(s).toPath());
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	public static boolean isLogFile(String name) {
+		return name.startsWith("MFY_") &&
+				name.endsWith(".txt") &&
+				name.length() == 23;
 	}
 }
