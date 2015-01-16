@@ -107,7 +107,7 @@ public class MFYLog {
 		boolean success = new File("MFY_logs").mkdir();
 		
 		try {
-			logWriter = new OutputStreamWriter(new FileOutputStream("MFY_logs\\"+logFileName), Charset.forName("UTF-8").newEncoder()) ;
+			logWriter = new OutputStreamWriter(new FileOutputStream("MFY_logs/"+logFileName), Charset.forName("UTF-8").newEncoder()) ;
 		} catch (Exception e) {	
 			int a = 0;
 		}
@@ -170,7 +170,7 @@ public class MFYLog {
 		for (String logName : dir.list()) {
 			if (isLogFile(logName) && !logName.startsWith(logFileName)) {
 				try {
-					String logNameMod = "MFY_logs\\"+logName;
+					String logNameMod = "MFY_logs/"+logName;
 					String zipName = logNameMod.replace("txt", "zip");
 					if (!new File(zipName).exists()) {
 						ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(zipName)));
