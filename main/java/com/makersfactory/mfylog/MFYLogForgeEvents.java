@@ -1,4 +1,4 @@
-package mypackage;
+package com.makersfactory.mfylog;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -15,6 +15,7 @@ import net.minecraftforge.event.ServerChatEvent;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
+import net.minecraftforge.event.entity.player.EntityItemPickupEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.world.BlockEvent.BreakEvent;
 import cpw.mods.fml.common.FMLLog;
@@ -22,7 +23,7 @@ import cpw.mods.fml.common.eventhandler.Event.Result;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.registry.LanguageRegistry;
 
-public class ForgeEvents {
+public class MFYLogForgeEvents {
 	
 	@SubscribeEvent
 	public void onPlayerChat(ServerChatEvent e) {
@@ -40,6 +41,13 @@ public class ForgeEvents {
 				result += " "+p;
 			}
 			MFYLog.log(MFYLog.tagCommand, e.sender.getCommandSenderName()+" "+result);
+		}
+	}
+	
+	@SubscribeEvent
+	public void onItemPickup(EntityItemPickupEvent e) {
+		if (!e.entity.worldObj.isRemote) {
+			if (e.item.getEntityItem().getItem() == Items.egg) e.setCanceled(true);
 		}
 	}
 	

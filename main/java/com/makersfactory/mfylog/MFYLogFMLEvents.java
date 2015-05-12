@@ -1,10 +1,22 @@
-package mypackage;
+package com.makersfactory.mfylog;
 
 import java.util.HashMap;
 
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.entity.EntityClientPlayerMP;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemEgg;
+import net.minecraft.item.ItemPotion;
+import net.minecraft.item.ItemStack;
+import net.minecraft.network.play.server.S2FPacketSetSlot;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.ChatComponentText;
+import net.minecraft.util.EnumChatFormatting;
+import net.minecraft.util.StatCollector;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -18,7 +30,7 @@ import cpw.mods.fml.common.gameevent.PlayerEvent.PlayerLoggedOutEvent;
 import cpw.mods.fml.common.gameevent.TickEvent.PlayerTickEvent;
 import cpw.mods.fml.common.network.FMLNetworkEvent.ServerConnectionFromClientEvent;
 
-public class FMLEvents {
+public class MFYLogFMLEvents {
 	
 	public class Coords {
 		int x = 0;
@@ -59,10 +71,10 @@ public class FMLEvents {
 	
 	@SubscribeEvent
 	public void onPlayerTick(PlayerTickEvent e) {
-		if (!e.player.worldObj.isRemote) {
-			EntityPlayer p = e.player;
-			String pName = p.getCommandSenderName();
-			Coords c = new Coords((int)Math.floor(p.posX),(int)Math.floor(p.posY),(int)Math.floor(p.posZ));
+		EntityPlayer player = e.player;
+		if (!e.player.worldObj.isRemote && e.phase == e.phase.END) {
+			String pName = player.getCommandSenderName();
+			Coords c = new Coords((int)Math.floor(player.posX),(int)Math.floor(player.posY),(int)Math.floor(player.posZ));
 			if (!playerCoordRegistry.containsKey(pName)) {
 				playerCoordRegistry.put(pName, c);
 			}
@@ -70,7 +82,6 @@ public class FMLEvents {
 				Coords old = playerCoordRegistry.get(pName);
 				if (c.x != old.x || c.y != old.y || c.z != old.z) {
 					MFYLog.log(MFYLog.tagMove, pName+" "+c.x+" "+c.y+" "+c.z);
-					p.worldObj.setBlock(0, 0, 0, Blocks.dirt);
 					playerCoordRegistry.put(pName, c);
 				}
 			}

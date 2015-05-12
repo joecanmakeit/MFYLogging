@@ -1,4 +1,4 @@
-package mypackage;
+package com.makersfactory.mfylog;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -15,6 +15,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import java.util.zip.GZIPOutputStream;
@@ -25,11 +26,14 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.spi.LoggerContextFactory;
 
 import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableSet;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockStone;
 import net.minecraft.block.material.Material;
 import net.minecraft.command.ServerCommandManager;
+import net.minecraft.init.Items;
+import net.minecraft.item.Item;
 import net.minecraft.server.MinecraftServer;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.config.Configuration;
@@ -41,12 +45,13 @@ import cpw.mods.fml.common.SidedProxy;
 import cpw.mods.fml.common.event.FMLInitializationEvent;
 import cpw.mods.fml.common.event.FMLPostInitializationEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
+import cpw.mods.fml.common.event.FMLServerStartingEvent;
 import cpw.mods.fml.common.event.FMLServerStoppingEvent;
 import cpw.mods.fml.common.network.NetworkRegistry;
 import cpw.mods.fml.common.registry.EntityRegistry;
 import cpw.mods.fml.common.registry.GameRegistry;
 
-@Mod(modid="MFYLog", name="MFY Log", version="0.1.1", acceptableRemoteVersions="*")
+@Mod(modid="MFYLog", name="MFY Log", version="0.0.3", acceptableRemoteVersions="*")
 public class MFYLog {
 
 	@Instance(value = "1")
@@ -69,7 +74,10 @@ public class MFYLog {
 	public static final String tagDamage = "DMG";
 	public static final String tagEntityDeath = "DTH";
 	public static final String tagConnect = "CON";
-
+	
+	public static ImmutableSet<Item> bannedItems;
+	public static ImmutableSet<Block> bannedBlocks;
+	
 	@EventHandler
 	public void preInit(FMLPreInitializationEvent event) {
 
@@ -78,7 +86,7 @@ public class MFYLog {
 		config.load();
 		config.save();
 	}
-
+	
 	@EventHandler
 	public void load(FMLInitializationEvent event) {
 		//proxy.registerRenderers();
@@ -87,8 +95,8 @@ public class MFYLog {
 		initLog();
 
 		// INITIALIZE EVENT LISTENERS
-		MinecraftForge.EVENT_BUS.register(new ForgeEvents());
-		FMLCommonHandler.instance().bus().register(new FMLEvents());
+		MinecraftForge.EVENT_BUS.register(new MFYLogForgeEvents());
+		FMLCommonHandler.instance().bus().register(new MFYLogFMLEvents());
 	}
 
 	@EventHandler

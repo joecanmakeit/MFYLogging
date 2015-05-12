@@ -1,6 +1,6 @@
-package mypackage;
+package com.makersfactory.mfylog;
 
-public class CommonProxy {
+public class MFYLogCommonProxy {
 
     // Client stuff
     public void registerRenderers() {
