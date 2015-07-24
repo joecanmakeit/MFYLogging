@@ -41,6 +41,9 @@ public class MFYLogForgeEvents {
 				result += " "+p;
 			}
 			MFYLog.log(MFYLog.tagCommand, e.sender.getCommandSenderName()+" "+result);
+			if (result.equalsIgnoreCase("save-all")) {
+				MFYLog.saveDynmap();
+			}
 		}
 	}
 	

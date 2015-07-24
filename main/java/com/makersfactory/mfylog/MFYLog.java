@@ -2,16 +2,20 @@ package com.makersfactory.mfylog;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.io.Reader;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -20,6 +24,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import java.util.zip.GZIPOutputStream;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -51,7 +56,7 @@ import cpw.mods.fml.common.network.NetworkRegistry;
 import cpw.mods.fml.common.registry.EntityRegistry;
 import cpw.mods.fml.common.registry.GameRegistry;
 
-@Mod(modid="MFYLog", name="MFY Log", version="0.0.3", acceptableRemoteVersions="*")
+@Mod(modid="MFYLog", name="MFY Log", version="0.0.4", acceptableRemoteVersions="*")
 public class MFYLog {
 
 	@Instance(value = "1")
@@ -62,6 +67,7 @@ public class MFYLog {
 	static String logFileName;
 	static OutputStreamWriter logWriter;
 	Date date;
+	static String dateText;
 	
 	public static final String tagInfo = "IFO";
 	public static final String tagMove = "MOV";
@@ -111,15 +117,20 @@ public class MFYLog {
 		String day = String.format("%02d", cal.get(Calendar.DAY_OF_MONTH));
 		String hour = String.format("%02d", cal.get(Calendar.HOUR_OF_DAY));
 		String minute = String.format("%02d", cal.get(Calendar.MINUTE));
-		logFileName = "MFY_"+year+"-"+month+"-"+day+"_"+hour+minute+".txt";
-		boolean success = new File("MFY_logs").mkdir();
+		dateText = year+"-"+month+"-"+day+"_"+hour+minute;
+		logFileName = "MFY_"+dateText+".txt";
+		String logsPath = getServertoolPath() + "\\worlds\\tmpworld\\MFY_logs";
+		boolean success = new File(logsPath).mkdir();
 		
 		try {
-			logWriter = new OutputStreamWriter(new FileOutputStream("MFY_logs/"+logFileName), Charset.forName("UTF-8").newEncoder()) ;
+			logWriter = new OutputStreamWriter(new FileOutputStream(logsPath+"\\"+logFileName), Charset.forName("UTF-8").newEncoder()) ;
 		} catch (Exception e) {	
 			int a = 0;
 		}
 		log(tagInfo, "Log file loaded.");
+		log(tagInfo, "World Name: " + getSavedWorldName());
+		//preserveDynmap();
+		loadDynmap();
 		compressExistingLogs();
 	}
 	
@@ -172,18 +183,19 @@ public class MFYLog {
 	static final int BUFFER = 2048;
 	
 	public static void compressExistingLogs() {
-		boolean success = new File("MFY_logs").mkdir();
-		File dir = new File("MFY_logs");
+		String logsPath = getServertoolPath() + "\\worlds\\tmpworld\\MFY_logs";
+		boolean success = new File(logsPath).mkdir();
+		File dir = new File(logsPath);
 		ArrayList<String> toDelete = new ArrayList<String>();
 		for (String logName : dir.list()) {
 			if (isLogFile(logName) && !logName.startsWith(logFileName)) {
 				try {
-					String logNameMod = "MFY_logs/"+logName;
-					String zipName = logNameMod.replace("txt", "zip");
+					String logNameMod = logsPath+"\\"+logName;
+					String zipName = logNameMod.replace(".txt", ".zip");
 					if (!new File(zipName).exists()) {
 						ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(zipName)));
 						BufferedInputStream orig = new BufferedInputStream(new FileInputStream(new File(logNameMod)), 2048);
-						out.putNextEntry(new ZipEntry(logName));
+						out.putNextEntry(new ZipEntry(logNameMod)); // might switch back to logName
 						byte data[] = new byte[BUFFER];
 						int count;
 						while ((count = orig.read(data, 0, BUFFER)) != -1) out.write(data,0,count);
@@ -209,5 +221,67 @@ public class MFYLog {
 		return name.startsWith("MFY_") &&
 				name.endsWith(".txt") &&
 				name.length() == 23;
+	}
+	
+	public static String getSavedWorldName() {
+		String output = "NO_NAME_FOUND";
+		try {
+			String path = new File("temp").getAbsolutePath();
+			path = path.substring(0, path.lastIndexOf("\\")); // parent 1
+			path = path.substring(0, path.lastIndexOf("\\")) + "\\settings\\serverwizardsettings.ini"; // parent 2
+			//log(tagInfo, "PATH: " + path);
+			BufferedReader r = new BufferedReader(new FileReader(path));
+			String line;
+			while ((line = r.readLine()) != null) {
+				if (line.startsWith("saved-map-name")) {
+					output = line.substring(line.indexOf("=")+1);
+				}
+			}
+			r.close();
+		} catch (Exception e) { }
+		return output;
+	}
+	
+	public static void preserveDynmap() {
+		String mapName = getSavedWorldName();
+		File curr = new File("dynmap\\web\\tiles\\..-worlds-tmpworld");
+		File dest = new File("dynmap\\web\\tiles\\"+mapName);
+		try {
+			FileUtils.deleteDirectory(dest);
+			FileUtils.moveDirectory(curr, dest);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public static void loadDynmap() {
+		File currDynmap = new File("dynmap\\web\\tiles");
+		if (currDynmap.exists()) {
+			try {
+				FileUtils.deleteDirectory(currDynmap);
+			} catch (Exception e) { e.printStackTrace(); }
+		}
+		File tmpworldDynmap = new File(getServertoolPath()+"\\worlds\\tmpworld\\dynmap\\web\\tiles");
+		if (tmpworldDynmap.exists()) {
+			try {
+				FileUtils.copyDirectory(tmpworldDynmap, currDynmap);
+			} catch (Exception e) { e.printStackTrace(); }
+		}
+	}
+	
+	public static void saveDynmap() {
+		File tmpworldDynmap = new File(getServertoolPath()+"\\worlds\\tmpworld\\dynmap\\web\\tiles");
+		File currDynmap = new File("dynmap\\web\\tiles");
+		try {
+			FileUtils.deleteDirectory(tmpworldDynmap);
+			FileUtils.copyDirectory(currDynmap, tmpworldDynmap);
+		} catch (Exception e) { e.printStackTrace(); }
+	}
+	
+	public static String getServertoolPath() {
+		String servertoolPath = new File("temp").getAbsolutePath();
+		servertoolPath = servertoolPath.substring(0, servertoolPath.lastIndexOf("\\"));
+		servertoolPath = servertoolPath.substring(0, servertoolPath.lastIndexOf("\\"));
+		return servertoolPath;
 	}
 }
